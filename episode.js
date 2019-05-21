@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: off */
 const jsdom = require('jsdom');
 const url = require('url');
 
@@ -45,7 +46,7 @@ class Episode {
         this.links.push({
           host: adr.host,
           links: [lnk]
-        })
+        });
       } else {
         items.forEach(item => {
           this.links[item.key].links.push(lnk);

@@ -9,6 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jsdom": "^15.1.0"
+    "jquery": "^3.4.1",
+    "jsdom": "^15.1.0",
+    "puppeteer": "^1.16.0",
+    "shelljs": "^0.8.3"
   }
 }
