@@ -21,19 +21,21 @@ class Episode {
    */
   constructor(elem) {
     this.size = elem.querySelector('div.size').textContent;
-    /** @type {HTMLLinkElement} */
+    /**@type {HTMLLinkElement} */
     let linkElem = elem.querySelector('div.link > a');
-    /** @type {Link} */
+    /**@type {Link} */
     this.link = {
       name: linkElem.textContent,
       href: linkElem.href
     };
-    /** @type {[HTMLLinkElement]} */
+    /**@type {[String]} */
+    this.downloads = [];
+    /**@type {[HTMLLinkElement]} */
     let linksElems = Array.prototype.slice.call(elem.querySelectorAll(' div.links > a'));
-    /** @type{[HostedLink]} */
+    /**@type{[HostedLink]} */
     this.links = [];
     linksElems.map(el => {
-      /** @type {Link} */
+      /**@type {Link} */
       let result = {
         href: el.href,
         name: el.textContent

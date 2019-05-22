@@ -3,9 +3,9 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 const JSDOM = require('jsdom').JSDOM;
-const Episode = require('../episode');
-const Downloader = require('../downloader');
-const debug = require('../debug');
+const Episode = require('../../episode');
+const Downloader = require('../../downloader');
+const debug = require('../../debug');
 const jquery = require('jquery');
 
 /**

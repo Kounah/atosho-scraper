@@ -26,7 +26,7 @@
         "--address",
         "https://animetosho.org/view/galator-made-abyss-season-01-bd-1080p-x264.n1132560",
         "--handler-openload",
-        "./handler/openload.js",
+        "./handler/puppeteer/openload.js",
       ],
       "name": "Launch With Test Data",
       "program": "${workspaceFolder}\\index.js"

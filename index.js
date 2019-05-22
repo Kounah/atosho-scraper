@@ -8,12 +8,13 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 
-const config = require('./config');
+const config = require('./config').default;
 const debug = require('./debug');
 
 const Plugin = require('./plugin');
 const Episode = require('./episode');
-const Handler = require('./handler').Handler;
+// const JsdomHandler = require('./handler/jsdom').Handler;
+const PuppeteerHandler = require('./handler/puppeteer').Handler;
 
 debug.log(args);
 
@@ -30,7 +31,7 @@ async function q(question) {
  * @param {Object} props properties to start this with, if its not an object it will collect the information from env vars
  * @param {String} props.address
  * @param {Array.<{name: String, path: String, class: Function, plugin: Plugin}>} props.plugins
- * @param {Array.<{name: String, path: String, class: Function, handler: Handler}>} props.handlers
+ * @param {[PuppeteerHandler]} props.handlers
  */
 async function start(props) {
   if(typeof props !== 'object') {
@@ -56,22 +57,14 @@ async function start(props) {
           return _;
         }),
       handlers: Object.keys(process.env)
-        .filter(key => key.startsWith('atosho_handler')).map(key => {
+        .filter(key => key.startsWith('atosho_handler'))
+        .map(key => {
           let p = path.isAbsolute(process.env[key])
             ? process.env[key]
             : path.join(process.cwd(), process.env[key]);
-          return {
-            name: key,
-            path: p,
-            class: require(p),
-            handler: undefined
-          };
+          return require(p);
         })
-        .filter(_ => typeof _.class == 'function' && _.class.prototype instanceof Handler)
-        .map(_ => {
-          _.handler = new _.class(config.handlerSettings);
-          return _;
-        })
+        .filter(_ => typeof _ == 'object' && _ instanceof PuppeteerHandler)
     };
   }
 
@@ -93,8 +86,17 @@ async function start(props) {
     } while(!addressValid);
   }
 
-  let jsdom = new JSDOM.JSDOM(await get(address));
+  debug.log('loading anime-tosho site');
+  let jsdom = await JSDOM.JSDOM.fromURL(url.format(address)); // (await get(address));
   let d = jsdom.window.document;
+
+  debug.log('retrieving information');
+  let seriesIndex = Array.prototype.slice.call(d.querySelectorAll('#content > table > tbody > tr > th'))
+    .map((elem, index) => (elem.textContent || elem.innerText).startsWith('Series') ? index : undefined)
+    .filter(i => i != undefined)
+    .shift();
+  let series =  seriesIndex ? d.querySelector(`#content > table > tbody > tr:nth-child(${seriesIndex + 1}) > td > a`).textContent : '';
+  debug.log('- series:', series);
 
   /**@type {Episode} */
   let filesIndex = Array.prototype.slice.call(d.querySelectorAll('#content > table > tbody > tr > th'))
@@ -105,10 +107,14 @@ async function start(props) {
   /**@type {Array.<Episode>} */
   let episodes = Array.prototype.slice.call(d.querySelectorAll(`#content > table > tbody > tr:nth-child(${filesIndex + 1}) > td > div > div`))
     .map(episodeElement => new Episode(episodeElement));
+  debug.log('- episodes:', episodes);
 
-  let result = await Promise.all(episodes.map(episode => Promise.all(props.handlers.map(handler => handler.handler.execute(episode)))));
-  result;
-  debug.log(result);
+  debug.log('initializing handlers');
+  await Promise.all(props.handlers.map(handler => handler.init()));
+  // handled episode download collection
+  debug.log('getting downloads');
+  await Promise.all(props.handlers.map(handler => handler.handle(episodes)));
+
 }
 
 /**
